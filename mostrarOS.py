@@ -1,8 +1,6 @@
 import nmap
 import os
 
-
-
 global nm
 nm = nmap.PortScanner()
 
@@ -24,21 +22,18 @@ def sudo_host(hosts):
     else :
         nm.scan(hosts, arguments='-O', sudo=True)
 
-
-
 def Mostrar_OS(hosts):
-    
-    assert('osmatch' in nm[hosts])
-    assert(len(nm[hosts]['osmatch'][0]['osclass']) > 0)
-    print('\033[92m''{}'.format(nm[hosts]['osmatch'][0]['osclass'][0]['vendor']), end='')
-
-
+    try:
+        assert('osmatch' in nm[hosts])
+        assert(len(nm[hosts]['osmatch'][0]['osclass']) > 0)
+        print('\033[92m Compañia/Organizacion (Comunidad): '+'\033[0m'+'{}'.format(nm[hosts]['osmatch'][0]['osclass'][0]['vendor']))
+    except:
+        print('\033[92m Compañia/Organizacion (Comunidad): '+'\033[0m'+'Unknown')
 
 def Mostrar_Version_OS(hosts):
-     try:
-        
+     try:        
         assert('osmatch' in nm[hosts])
-        print('\033[0m''OS: {}'.format(nm[hosts]['osmatch'][0]['name']))
+        print('\033[92m Version OS'+'\033[0m'+': {}'.format(nm[hosts]['osmatch'][0]['name']))
         assert('accuracy' in nm[hosts]['osmatch'][0])
         assert('line' in nm[hosts]['osmatch'][0])
 
@@ -48,4 +43,4 @@ def Mostrar_Version_OS(hosts):
         assert('osgen' in nm[hosts]['osmatch'][0]['osclass'][0])
         assert('accuracy' in nm[hosts]['osmatch'][0]['osclass'][0])
      except:
-         print('\033[0m'' OS: Unknown  (Desconocido)', end= '')
+         print('\033[92m Version OS: '+'\033[0m'+'Unknown')
