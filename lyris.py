@@ -3,246 +3,202 @@ import mostrarOS
 import sys
 import os
 
-global archivo_mac_legs # Variable para la cargar el archivo mac_legs
-global workspaces
-global lineas
+global IPS
+global Vendor
+global HOSTNAME
+global MAC
 
-global mac_intrusa
-global mac_legs
-global IP
-global IPScanner
+global nm 
+global MAC_FILE
 
-global nm 	# Variable declarada para ejecutar los comando de Nmap
 nm = nmap.PortScanner() # se le asigna a nm las funciones de escaner de red  
 
-IPScanner = ''
-workspaces = ''
-
-mac_intrusa = []
-mac_legs = []
 IPS = []
+Vendor = []
+HOSTNAME = []
+MAC = []
+MAC_FILE = []
 
-print('Archivo con las Mac Legitimas >>> ', end='')
-workspaces = input()
-print('Direccion IP de La Red a Escanear >>> ', end='')	
-IPScanner = input()
-
-def Cargar_Archivo_MAC(workspaces):
-
-	try:	
-		archivo_mac_legs = open(workspaces, 'r')
-
-		lineas = archivo_mac_legs.readline()
+def Load_File_MAC_Pertain(workspaces):
+	try:
+		File_MAC_Pertain = open(workspaces, 'r')
+		lineas = File_MAC_Pertain.readline()
 		index = 0
-
 		while lineas != "":
-			mac_legs.insert(index, lineas)
-			lineas = archivo_mac_legs.readline()
-			index += 1
-		archivo_mac_legs.close()
-
+			MAC_FILE.insert(index, lineas)
+			lineas = File_MAC_Pertain.readline()
+			index += 1		
+		File_MAC_Pertain.close()
 	except FileNotFoundError as e:
-		print('Error. No se Localizo el Archivo: ', workspaces)
-		print('\nArchivo con las Mac Legitimas >>> ', end='')
-		workspaces = input()
+		print('Error. Archivo No Encontrado: ', workspaces)
+	set_Archivo(workspaces)
 
-	
-def MAC_Intusas():
-
+def Scan_Net(IPScanner):
+	set_IPScanners(IPScanner)
 	nm.scan(IPScanner+'/24', arguments='-sP', sudo=True) # Comando de Escaner de Nmap
-	
-	activos = 0
-	index_mac_intrusa = 0
-	index_IP = 0
-
+	index = 0
 	for hosts in nm.all_hosts():
 		if 'mac' in nm[hosts]['addresses']:
-			
-			activos += 1
-
-			if (str(nm[hosts]['addresses']['mac'])+'\n' in mac_legs)!= True:
-				
-				print('\033[0m''\nBuscando Hosts Intrusos')
-				mac_intrusa.insert(index_mac_intrusa, ('{}'.format(nm[hosts]['addresses']['mac'])))
-			
-				print('\033[93m''\n'+ '{}'.format(nm[hosts]['addresses']['ipv4']), end='')
-				print('\033[96m'' : '+'{}'.format(nm[hosts]['vendor']))
-				
-				if str(nm[hosts].hostname()) != '':
-
-					print('\033[92m''Nombre del Host : %s (%s)''\033[0m' % ('', nm[hosts].hostname()))
-
-				else:
-					print('\033[92m''Nombre del Host :''\033[0m'' Unknown  (Desconocido)')
-
-				mostrarOS.sudo_host('{}'.format(nm[hosts]['addresses']['ipv4']))
-				mostrarOS.Mostrar_Version_OS('{}'.format(nm[hosts]['addresses']['ipv4']))
-
-				print('\033[92m'' Estado:''\033[91m'' No Pertenece a la Red')
-				index_mac_intrusa += 1
-
+			MAC.insert(index, '{}'.format(nm[hosts]['addresses']['mac']))
+			IPS.insert(index, '{}'.format(nm[hosts]['addresses']['ipv4']))
+			Vendor.insert(index, '{}'.format(nm[hosts]['vendor']))
+			if str(nm[hosts].hostname()) != '':
+				HOSTNAME.insert(index, '%s (%s)' % ('', nm[hosts].hostname()))
 			else:
-				IPS.insert(index_IP, '{}'.format(nm[hosts]['addresses']['mac']))
-				index_IP += 1
+				HOSTNAME.insert(index, 'Unknown')
+			index += 1
 
-	print('\n\033[0m''Total Hosts Legitimos: ''\033[92m', index_IP )
-	print('\033[0m''Total Hosts Intrusos: ''\033[91m', index_mac_intrusa)
-	print('\033[0m''Total Hosts Activos: ''\033[92m', activos)
-
-def MAC_Legitimas():
-
-	nm.scan(IPScanner+'/24', arguments='-sP', sudo=True) # Comando de Escaner de Nmap
-	
-	activos = 0
-	index_mac_intrusa = 0
-	index_IP = 0
-
-	for hosts in nm.all_hosts():
-		if 'mac' in nm[hosts]['addresses']:
-			
-			activos += 1
-
-			if (str(nm[hosts]['addresses']['mac'])+'\n' in mac_legs)== True:
-				
-				print('\033[0m''\nBuscando Hosts Legitimos')
-				IPS.insert(index_IP, ('{}'.format(nm[hosts]['addresses']['mac'])))
-			
-				print('\033[93m''\n'+ '{}'.format(nm[hosts]['addresses']['ipv4']), end='')
-				print('\033[96m'' : '+'{}'.format(nm[hosts]['vendor']))
-				
-				if str(nm[hosts].hostname()) != '':
-
-					print('\033[92m''Nombre del Host : %s (%s)''\033[0m' % ('', nm[hosts].hostname()))
-
-				else:
-					print('\033[92m''Nombre del Host :''\033[0m'' Unknown  (Desconocido)')
-
-				mostrarOS.sudo_host('{}'.format(nm[hosts]['addresses']['ipv4']))
-				mostrarOS.Mostrar_Version_OS('{}'.format(nm[hosts]['addresses']['ipv4']))
-
-				print('\033[92m'' Estado: Pertenece a la Red')
-				index_IP += 1
-
+def MAC_Pertain():
+	index = 0
+	hosts_legitimos_activos = 0
+	hosts_intrusos_activos = 0
+	if len(IPS) != 0:
+		print(' ID      Hosts')
+		while index != len(MAC):
+			if (MAC[index]+'\n' in MAC_FILE) == True:
+				hosts_legitimos_activos += 1
+				print('\033[92m'+''+str(hosts_legitimos_activos)+' - ', end='')
+				print('\033[93m'+IPS[index], end='')
+				print('\033[94m'+': '+Vendor[index].strip('{'))
+				print('\033[92m Nombre del Hosts: '+'\033[0m'+HOSTNAME[index])
+				mostrarOS.sudo_host(IPS[index])
+				mostrarOS.Mostrar_OS(IPS[index])
+				mostrarOS.Mostrar_Version_OS(IPS[index])
+				print('\033[92m'+'Estado: Pertenece a la Red')
+				index += 1
 			else:
-				mac_intrusa.insert(index_mac_intrusa, '{}'.format(nm[hosts]['addresses']['mac']))
-				index_mac_intrusa += 1
+				hosts_intrusos_activos += 1
+				index += 1
+		print('\n\033[92m Hosts Legitimos Activos: ', '\033[0m'+str(hosts_legitimos_activos))
+		print('\033[92m Hosts Intrusos Activos: ', '\033[0m'+str(hosts_intrusos_activos))
+		print('\033[92m Total de Hosts Activos: ', '\033[0m'+str(hosts_legitimos_activos + hosts_intrusos_activos))
+		Load_File_MAC_Pertain(get_Archivo())
+		Scan_Net(get_IPScanners())
+	else:
+		print('\033[91m Error. No se ha Escaneado la Red!')
+		exit()	
 
-	print('\n\033[0m''Total Hosts Legitimos: ''\033[92m', index_IP )
-	print('\033[0m''Total Hosts Intrusos: ''\033[91m', index_mac_intrusa)
-	print('\033[0m''Total Hosts Activos: ''\033[92m', activos)
+def MAC_Not_Pertain():
+	index = 0
+	hosts_legitimos_activos = 0
+	hosts_intrusos_activos = 0
+	if len(IPS) != 0:
+		while index != len(MAC):
+			if (MAC[index]+'\n' in MAC_FILE) != True:
+				hosts_intrusos_activos += 1
+				print('\n\033[92m'+' '+str(hosts_intrusos_activos)+' - ', end='')
+				print('\033[93m'+IPS[index], end='')
+				print('\033[94m'+': '+Vendor[index])
+				print('\033[92m Nombre del Hosts: '+'\033[0m'+HOSTNAME[index])
+				mostrarOS.sudo_host(IPS[index])
+				mostrarOS.Mostrar_OS(IPS[index])
+				mostrarOS.Mostrar_Version_OS(IPS[index])
+				print('\033[91m'+' Estado: No Pertenece a la Red')
+				index += 1
+			else:
+				hosts_legitimos_activos += 1
+				index += 1		
+		print('\n\033[92m Hosts Legitimos Activos: ', '\033[0m'+str(hosts_legitimos_activos))
+		print('\033[92m Hosts Intrusos Activos: ', '\033[0m'+str(hosts_intrusos_activos))
+		print('\033[92m Total de Hosts Activos: ', '\033[0m'+str(hosts_legitimos_activos + hosts_intrusos_activos))
+		Load_File_MAC_Pertain(get_Archivo())
+		Scan_Net(get_IPScanners())
+	else:
+		print('\033[91m Error. No se ha Escaneado la Red!')
+		exit()
 
 def MAC_All():
-
-	nm.scan(IPScanner+'/24', arguments='-sP', sudo=True) # Comando de Escaner de Nmap
-	
-	activos = 0
-	index_mac_intrusa = 0
-	index_IP = 0
-
-	for hosts in nm.all_hosts():
-		if 'mac' in nm[hosts]['addresses']:
-			
-			activos += 1
-
-			if (str(nm[hosts]['addresses']['mac'])+'\n' in mac_legs)!= True:
-				
-				
-				mac_intrusa.insert(index_mac_intrusa, ('{}'.format(nm[hosts]['addresses']['mac'])))
-			
-				print('\033[93m''\n'+ '{}'.format(nm[hosts]['addresses']['ipv4']), end='')
-				print('\033[96m'' : '+'{}'.format(nm[hosts]['vendor']))
-				
-				if str(nm[hosts].hostname()) != '':
-
-					print('\033[92m''Nombre del Host : %s (%s)''\033[0m' % ('', nm[hosts].hostname()))
-
-				else:
-					print('\033[92m''Nombre del Host :''\033[0m'' Unknown  (Desconocido)')
-
-				mostrarOS.sudo_host('{}'.format(nm[hosts]['addresses']['ipv4']))
-				mostrarOS.Mostrar_Version_OS('{}'.format(nm[hosts]['addresses']['ipv4']))
-
-				print('\033[92m'' Estado:''\033[91m'' No Pertenece a la Red')
-				index_mac_intrusa += 1
-
-			else:
-				IPS.insert(index_IP, '{}'.format(nm[hosts]['addresses']['mac']))
-				mac_intrusa.insert(index_mac_intrusa, ('{}'.format(nm[hosts]['addresses']['mac'])))
-			
-				print('\033[93m''\n'+ '{}'.format(nm[hosts]['addresses']['ipv4']), end='')
-				print('\033[96m'' : '+'{}'.format(nm[hosts]['vendor']))
-				
-				if str(nm[hosts].hostname()) != '':
-
-					print('\033[92m''Nombre del Host : %s (%s)''\033[0m' % ('', nm[hosts].hostname()))
-
-				else:
-					print('\033[92m''Nombre del Host :''\033[0m'' Unknown  (Desconocido)')
-
-				mostrarOS.sudo_host('{}'.format(nm[hosts]['addresses']['ipv4']))
-				mostrarOS.Mostrar_Version_OS('{}'.format(nm[hosts]['addresses']['ipv4']))
-
-				print('\033[92m'' Estado:''\033[91m'' Pertenece a la Red')
-				index_IP += 1
-
-	print('\n\033[0m''Total Hosts Legitimos: ''\033[92m', index_IP )
-	print('\033[0m''Total Hosts Intrusos: ''\033[91m', index_mac_intrusa)
-	print('\033[0m''Total Hosts Activos: ''\033[92m', activos)
-
-
-def Guardar_Mac_Intrusa():
-
 	index = 0
-	escribir_archivo_mac_intrusa = open(('intruso_'+workspaces) , 'w')
-	leer_archivo_mac_intrusa = open(('intruso_'+workspaces), 'r')
-	lineas = leer_archivo_mac_intrusa.readline()
-
-	while index != len(mac_intrusa):
-		if (lineas in mac_intrusa)!= True:
-			escribir_archivo_mac_intrusa.write(str(mac_intrusa[index])+' >>> '+IPS[index]+'\n')
-			lineas = leer_archivo_mac_intrusa.readline()
-			index += 1
-	leer_archivo_mac_intrusa.close()
-	escribir_archivo_mac_intrusa.close()
-
-try:
-	run1 = True
-	while run1 != False:
-		
-		comando_lyris = ''
-		print('lyris >>> ', end='')
-		comando_lyris = input()
-
-		if comando_lyris == 'mac':
+	hosts_legitimos_activos = 0
+	hosts_intrusos_activos = 0
+	hosts_activos = 0
+	caracter = '{'+'}'
+	if len(IPS) != 0:
+		while index != len(MAC):
+			print('\n\033[0m ID  Direccion IP 	Direccion MAC       Adaptador de Red')
+			hosts_activos += 1
+			print('\033[92m'+' '+str(hosts_activos)+' - ', end='')
+			print('\033[93m'+IPS[index], end='')
+			print('\033[94m'+' : '+Vendor[index].strip(caracter))
+			print('\033[92m Hostname: '+'\033[0m'+HOSTNAME[index])
+			mostrarOS.sudo_host(IPS[index])
+			mostrarOS.Mostrar_OS(IPS[index])
+			mostrarOS.Mostrar_Version_OS(IPS[index])
+			if (MAC[index]+'\n' in MAC_FILE) == True:
+				hosts_legitimos_activos += 1
+				print('\033[92m'+' Estado: Pertenece a la Red')
+				index += 1
+			else:
+				hosts_intrusos_activos += 1
+				print('\033[91m'+' Estado: No Pertenece a la Red')
+				index += 1
+		print('\n\033[92m Hosts Legitimos Activos: ', '\033[0m'+str(hosts_legitimos_activos))
+		print('\033[92m Hosts Intrusos Activos: ', '\033[0m'+str(hosts_intrusos_activos))
+		print('\033[92m Total de Hosts Activos: ', '\033[0m'+str(hosts_legitimos_activos + hosts_intrusos_activos))
+		Load_File_MAC_Pertain(get_Archivo())
+		Scan_Net(get_IPScanners())
+	else:
+		print('\033[91m Error. No se ha Escaneado la Red!')
+		exit()
 			
-			run = True
-			while run != False:
-				
-				Cargar_Archivo_MAC(workspaces)
-				MAC_Intusas()
-				IPS = list(set(IPS))
-				mac_intrusa = list(set(mac_intrusa))
-				mac_legs = list(set(mac_legs))
-				Guardar_Mac_Intrusa()
-
-		elif comando_lyris == ' mac -pertain':
-			
-			Cargar_Archivo_MAC(workspaces)
-			MAC_Legitimas()
-			
-			IPS = list(set(IPS))
-			mac_intrusa = list(set(mac_intrusa))
-			mac_legs = list(set(mac_legs))
-
-		elif comando_lyris == 'mac all':
-			
-			Cargar_Archivo_MAC(workspaces)
-			MAC_All()
-			IPS = list(set(IPS))
-			mac_intrusa = list(set(mac_intrusa))
-			mac_legs = list(set(mac_legs))
+def Save_MAC_Not_Pertain(workspaces):
+	index = 0
+	if len(IPS) != 0:
+		escribir_archivo_mac_intrusa = open((workspaces) , 'w')
+		leer_archivo_mac_intrusa = open((workspaces), 'r')
+		lineas = leer_archivo_mac_intrusa.readline()
+		if len(MAC) != 0:
+			while index != len(MAC):
+				if (MAC[index] in MAC_FILE) != True:
+					if (lineas in MAC)!= True:
+						escribir_archivo_mac_intrusa.write(str(MAC[index])+' >>> '+IPS[index]+'\n')
+						lineas = leer_archivo_mac_intrusa.readline()
+						index += 1
+			leer_archivo_mac_intrusa.close()
+			escribir_archivo_mac_intrusa.close()
 		else:
-			print('Error. Comando Desconocido')
+			print('\033[91m Error. No se Puede Almacenar el Archivo: ', workspaces)
+	else:
+		print('\033[91m No se Puedo Almacenar el Archivo: ', workspaces)
 
-except KeyboardInterrupt as e:
-	print(' Proceso Interruntido')
+def Eliminar_Objetos_Duplicados(IPS, Vendor, HOSTNAME, MAC, MAC_FILE):
+
+	IPS = list(set(IPS))
+	Vendor = list(set(Vendor))
+	HOSTNAME = list(set(HOSTNAME))
+	MAC = list(set(MAC))
+	MAC_FILE = list(set(MAC_FILE))
+
+def run_MAC_Pertain():
+	run = False
+	while run != True :
+		MAC_Pertain()
+		Eliminar_Objetos_Duplicados(IPS, Vendor, HOSTNAME, MAC, MAC_FILE)
+
+def run_MAC_Not_Pertain():
+	run =False
+	while run != True:
+		MAC_Not_Pertain()
+		Eliminar_Objetos_Duplicados(IPS, Vendor, HOSTNAME, MAC, MAC_FILE)
+
+def run_MAC_All():
+	run = False
+	while  run != True:
+		MAC_All()
+	Eliminar_Objetos_Duplicados(IPS, Vendor, HOSTNAME, MAC, MAC_FILE)
+
+def get_Archivo():
+	global archivo
+	return archivo
+
+def set_Archivo(archivos):
+	global archivo
+	archivo = archivos
+
+def get_IPScanners():
+	global IPScanners
+	return IPScanners
+
+def set_IPScanners(IPScannersx):
+	global IPScanners
+	IPScanners = IPScannersx
