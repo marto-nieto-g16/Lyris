@@ -28,3 +28,17 @@ Detección de servicios está ejecutando la misma.
 2. Python 3.x
 3. La librería Python-Nmap
 4. La herramienta Figlet
+
+# Modo de Uso
+
+1. escribir load_file + nombre_archivo.txt (recomentamente la ruta complet en donde se encuentre almacenado)
+2. save_file_intruder + nombre_archivo.txt en donde se van a almacenar las MAC intrusas
+
+- Para escanear toda la red se utiliza
+  scan + direccion IP del Router a escanear
+ 
+ - Para Mostrar solamente Las MAC legitimas de la red
+   pertains + direccion IP del Router
+ 
+ - Para Mostrar Solamente las MAC Intrusas
+    intruder + direccion IP del Router
