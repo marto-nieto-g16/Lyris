@@ -35,10 +35,10 @@ Detección de servicios está ejecutando la misma.
 2. save_file_intruder + nombre_archivo.txt en donde se van a almacenar las MAC intrusas
 
 - Para escanear toda la red se utiliza
-  scan + direccion IP del Router a escanear
+  - scan + direccion IP del Router a escanear
  
  - Para Mostrar solamente Las MAC legitimas de la red
-   pertains + direccion IP del Router
+   - pertains + direccion IP del Router
  
  - Para Mostrar Solamente las MAC Intrusas
-    intruder + direccion IP del Router
+    - intruder + direccion IP del Router
